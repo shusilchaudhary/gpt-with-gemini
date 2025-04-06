@@ -3,17 +3,33 @@ import { assets } from '../../assets/assets';
 import { Context } from '../../context/Context';
 
 function Main() {
-  const { onSent, recentPrompt, showResult, resultData, setInput, input } = useContext(Context);
+  const { onSent, setInput, input, resultData } = useContext(Context);
+  const [qaPairs, setQaPairs] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const handleSent = () => {
-    setLoading(true); // Start loading
-    onSent(); // Trigger the onSent handler
+  const handleSent = async () => {
+    if (!input.trim()) return;
 
-    // Simulate a shorter thinking/loading time
-    setTimeout(() => {
-      setLoading(false); // Stop loading after 1 second
-    }, 100); // Shortened the time to 1000ms (1 second)
+    const userPrompt = input;
+    setInput('');
+    setLoading(true);
+
+    try {
+      let answer = await onSent(userPrompt);
+
+      if (!answer && resultData) {
+        answer = resultData;
+      }
+
+      const cleanAnswer = (answer || 'Sorry, I couldn’t generate a response.').replace(/\*/g, '');
+
+      setQaPairs((prev) => [...prev, { question: userPrompt, answer: cleanAnswer }]);
+    } catch (error) {
+      console.error('Error generating answer:', error);
+      setQaPairs((prev) => [...prev, { question: userPrompt, answer: 'Failed to generate response. Please try again.' }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -26,7 +42,7 @@ function Main() {
 
       {/* Main Content */}
       <div className="w-full max-w-4xl mx-auto mt-10 px-4 sm:px-6 lg:px-8">
-        {!showResult ? (
+        {qaPairs.length === 0 && !loading && (
           <>
             {/* Welcome Section */}
             <div className="text-center my-8">
@@ -58,27 +74,35 @@ function Main() {
               </div>
             </div>
           </>
-        ) : (
-          <div className="max-h-[70vh] overflow-y-auto mt-8 scrollbar-hide">
-            <div className="flex items-center gap-3 my-4">
-              <img className="rounded-full w-12" src={assets.user_icon} alt="User Icon" />
-              <p className="text-xl font-semibold text-gray-800">{recentPrompt}</p>
-            </div>
-            <div className="flex items-start gap-5 bg-white p-6 rounded-2xl shadow-md mt-4">
-              <img className="w-12" src={assets.gemini_icon} alt="Gemini Icon" />
-              <div>
-                {loading ? (
-                  <div className="flex items-center">
-                    <p className="text-gray-500 animate-pulse">Thinking...</p>
-                    <span className="dot-flash ml-1"></span>
-                  </div>
-                ) : (
-                  <p dangerouslySetInnerHTML={{ __html: resultData }} className="text-gray-700"></p>
-                )}
+        )}
+
+        {/* QA Section */}
+        <div className="max-h-[70vh] overflow-y-auto mt-8 scrollbar-hide space-y-6">
+          {qaPairs.map((pair, index) => (
+            <div key={index}>
+              <div className="flex items-center gap-3 my-4">
+                <img className="rounded-full w-12" src={assets.user_icon} alt="User Icon" />
+                <p className="text-xl font-semibold text-gray-800">{pair.question}</p>
+              </div>
+              <div className="flex items-start gap-5 bg-white p-6 rounded-2xl shadow-md">
+                <img className="w-12" src={assets.gemini_icon} alt="Gemini Icon" />
+                <div>
+                  <p dangerouslySetInnerHTML={{ __html: pair.answer }} className="text-gray-700"></p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          ))}
+
+          {loading && (
+            <div className="flex items-start gap-5 bg-white p-6 rounded-2xl shadow-md">
+              <img className="w-12" src={assets.gemini_icon} alt="Gemini Icon" />
+              <div className="flex items-center">
+                <p className="text-gray-500 animate-pulse">Thinking...</p>
+                <span className="dot-flash ml-1"></span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Input Section */}
         <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-[90%] md:w-[600px] lg:w-[900px] bg-white shadow-lg rounded-xl py-3 px-6 mb-4 flex items-center gap-4">
@@ -114,4 +138,3 @@ function Main() {
 }
 
 export default Main;
-

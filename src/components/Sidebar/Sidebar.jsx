@@ -12,7 +12,7 @@ function Sidebar() {
   };
 
   return (
-    <div className="h-screen fixed w-60 md:w-auto flex flex-col bg-gray-400 text-white shadow-lg top-0 left-0 transition-all duration-300">
+    <div className="hidden lg:flex h-screen fixed w-60 flex-col bg-gray-400 text-white shadow-lg top-0 left-0 transition-all duration-300">
       {/* Sidebar Header */}
       <div className="flex items-center justify-between p-6 bg-blue-500">
         <img
@@ -67,7 +67,7 @@ function Sidebar() {
         </div>
       </div>
 
-      {/* Help, Activity, Settings moved to the bottom */}
+      {/* Help, Activity, Settings */}
       <div className="flex flex-col gap-4 p-4 mt-4">
         <div className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-gray-700 transition-all duration-200">
           <img
